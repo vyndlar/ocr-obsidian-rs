@@ -1,4 +1,5 @@
-use teloxide::{prelude::*, utils::command::BotCommands};
+// TODO: Add user state enum
+use teloxide::{prelude::*, types::Message, utils::command::BotCommands};
 
 #[tokio::main]
 async fn main() {
@@ -10,7 +11,7 @@ async fn main() {
     Command::repl(bot, answer).await;
 }
 
-// The 'comments' below are actually displayed to the user
+// The 'comments' below are actually display to the user
 #[derive(BotCommands, Clone)]
 #[command(
     rename_rule = "lowercase",
@@ -36,6 +37,20 @@ enum Command {
 }
 
 async fn answer(bot: Bot, msg: Message, cmd: Command) -> ResponseResult<()> {
+    log::info!("Msg recieved!");
+
+    if msg.text().is_some() {
+        text_message(bot, msg, cmd).await?;
+    } else if msg.photo().is_some() {
+        photo_msg(bot, msg).await?;
+    } else {
+        log::error!("Message type not captured in answer()");
+    }
+
+    Ok(())
+}
+
+async fn text_message(bot: Bot, msg: Message, cmd: Command) -> ResponseResult<()> {
     match cmd {
         Command::Help { help_command } => {
             log::info!("Help command");
@@ -69,6 +84,11 @@ async fn answer(bot: Bot, msg: Message, cmd: Command) -> ResponseResult<()> {
         }
     };
 
+    Ok(())
+}
+
+async fn photo_msg(bot: Bot, msg: Message) -> ResponseResult<()> {
+    bot.send_message(msg.chat.id, "Photo".to_string()).await?;
     Ok(())
 }
 
