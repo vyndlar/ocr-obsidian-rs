@@ -82,35 +82,41 @@ async fn help_command_handler(bot: Bot, msg: Message, help_command: String) -> H
 
 async fn list_command_handler(bot: Bot, msg: Message) -> HandlerResult {
     log::info!("List Command");
-    bot.send_message(msg.chat.id, Command::descriptions().to_string())
-        .await?;
+    bot.send_message(msg.chat.id, "The list command").await?;
 
     Ok(())
 }
 
 async fn settings_command_handler(bot: Bot, msg: Message) -> HandlerResult {
     log::info!("Settings");
-    bot.send_message(msg.chat.id, Command::descriptions().to_string())
+    bot.send_message(msg.chat.id, "The settings command")
         .await?;
 
     Ok(())
 }
 
 async fn new_command_handler(bot: Bot, msg: Message, data: String) -> HandlerResult {
-    bot.send_message(
-        msg.chat.id,
-        format!("{}, {}", data, Command::descriptions()),
-    )
-    .await?;
-
+    if data.is_empty() {
+        bot.send_message(msg.chat.id, "The new command, with no data!")
+            .await?;
+    } else {
+        bot.send_message(
+            msg.chat.id,
+            format!("The new command, here is your data: , {}", data),
+        )
+        .await?;
+    }
     Ok(())
 }
 
-async fn text_message_handler() -> HandlerResult {
+async fn text_message_handler(bot: Bot, msg: Message) -> HandlerResult {
+    bot.send_message(msg.chat.id, "You sent a text message!")
+        .await?;
     Ok(())
 }
 
-async fn photo_message_handler() -> HandlerResult {
+async fn photo_message_handler(bot: Bot, msg: Message) -> HandlerResult {
+    bot.send_message(msg.chat.id, "You sent a photo!").await?;
     Ok(())
 }
 
