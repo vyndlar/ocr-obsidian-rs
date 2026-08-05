@@ -1,4 +1,3 @@
 # Obsidian OCR rewritten in Rust
 
-Work in progress
-![Original](https://github.com/vyndlar/ocr-obsidian)
+Work in progress, here is the ![original, written in Python](https://github.com/vyndlar/ocr-obsidian)
