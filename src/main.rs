@@ -1,14 +1,38 @@
 // TODO: Add user state enum
-use teloxide::{prelude::*, types::Message, utils::command::BotCommands};
+use dptree::case;
+use teloxide::{
+    prelude::*,
+    types::{Message, Update},
+    utils::command::BotCommands,
+};
+
+pub type Error = Box<dyn std::error::Error + Send + Sync + 'static>;
+pub type HandlerResult = Result<(), Error>;
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<(), Error> {
     pretty_env_logger::init();
     log::info!("Starting bot");
 
     let bot = Bot::from_env();
 
-    Command::repl(bot, answer).await;
+    //Command::repl(bot, answer).await;
+
+    // command handler to handle different command types
+    let command_handler = teloxide::filter_command::<Command, _>()
+        .branch(case![Command::Help { help_command }].endpoint(help_command_handler));
+
+    let message_handler = Update::filter_message().branch(command_handler);
+
+    let schema = message_handler;
+
+    Dispatcher::builder(bot, schema)
+        .enable_ctrlc_handler()
+        .build()
+        .dispatch()
+        .await;
+
+    Ok(())
 }
 
 // The 'comments' below are actually display to the user
@@ -19,7 +43,7 @@ async fn main() {
 )]
 enum Command {
     /// This message, add a command name to get help with a specific command
-    /// Example ````/help ls``` would give help for the 'List' command
+    /// Example ```/help ls``` would give help for the 'List' command
     #[command(aliases = ["h", "?"])]
     Help { help_command: String },
 
@@ -34,6 +58,21 @@ enum Command {
     /// Add a new vault
     #[command()]
     New { data: String },
+}
+
+async fn help_command_handler(bot: Bot, msg: Message, help_command: String) -> HandlerResult {
+    log::info!("Help command");
+    if help_command.is_empty() {
+        bot.send_message(msg.chat.id, Command::descriptions().to_string())
+            .await?;
+    } else {
+        bot.send_message(
+            msg.chat.id,
+            get_help_with_command(&help_command.to_lowercase()),
+        )
+        .await?;
+    }
+    Ok(())
 }
 
 async fn answer(bot: Bot, msg: Message, cmd: Command) -> ResponseResult<()> {
