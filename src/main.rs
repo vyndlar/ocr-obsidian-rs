@@ -16,13 +16,18 @@ async fn main() -> Result<(), Error> {
 
     let bot = Bot::from_env();
 
-    //Command::repl(bot, answer).await;
-
     // command handler to handle different command types
     let command_handler = teloxide::filter_command::<Command, _>()
-        .branch(case![Command::Help { help_command }].endpoint(help_command_handler));
+        .branch(case![Command::Help { help_command }].endpoint(help_command_handler))
+        .branch(case![Command::List].endpoint(list_command_handler))
+        .branch(case![Command::Settings].endpoint(settings_command_handler))
+        .branch(case![Command::New { data }].endpoint(new_command_handler));
 
-    let message_handler = Update::filter_message().branch(command_handler);
+    let message_handler = Update::filter_message()
+        .branch(command_handler)
+        // text-only messages
+        .branch(Message::filter_text().endpoint(text_message_handler))
+        .branch(Message::filter_photo().endpoint(photo_message_handler));
 
     let schema = message_handler;
 
@@ -75,59 +80,37 @@ async fn help_command_handler(bot: Bot, msg: Message, help_command: String) -> H
     Ok(())
 }
 
-async fn answer(bot: Bot, msg: Message, cmd: Command) -> ResponseResult<()> {
-    log::info!("Msg recieved!");
-
-    if msg.text().is_some() {
-        text_message(bot, msg, cmd).await?;
-    } else if msg.photo().is_some() {
-        photo_msg(bot, msg).await?;
-    } else {
-        log::error!("Message type not captured in answer()");
-    }
+async fn list_command_handler(bot: Bot, msg: Message) -> HandlerResult {
+    log::info!("List Command");
+    bot.send_message(msg.chat.id, Command::descriptions().to_string())
+        .await?;
 
     Ok(())
 }
 
-async fn text_message(bot: Bot, msg: Message, cmd: Command) -> ResponseResult<()> {
-    match cmd {
-        Command::Help { help_command } => {
-            log::info!("Help command");
-            if help_command.is_empty() {
-                bot.send_message(msg.chat.id, Command::descriptions().to_string())
-                    .await?
-            } else {
-                bot.send_message(
-                    msg.chat.id,
-                    get_help_with_command(help_command.to_lowercase().as_str()),
-                )
-                .await?
-            }
-        }
-        Command::List => {
-            log::info!("List Command");
-            bot.send_message(msg.chat.id, Command::descriptions().to_string())
-                .await?
-        }
-        Command::Settings => {
-            log::info!("Settings");
-            bot.send_message(msg.chat.id, Command::descriptions().to_string())
-                .await?
-        }
-        Command::New { data } => {
-            bot.send_message(
-                msg.chat.id,
-                format!("{}, {}", data, Command::descriptions()),
-            )
-            .await?
-        }
-    };
+async fn settings_command_handler(bot: Bot, msg: Message) -> HandlerResult {
+    log::info!("Settings");
+    bot.send_message(msg.chat.id, Command::descriptions().to_string())
+        .await?;
 
     Ok(())
 }
 
-async fn photo_msg(bot: Bot, msg: Message) -> ResponseResult<()> {
-    bot.send_message(msg.chat.id, "Photo".to_string()).await?;
+async fn new_command_handler(bot: Bot, msg: Message, data: String) -> HandlerResult {
+    bot.send_message(
+        msg.chat.id,
+        format!("{}, {}", data, Command::descriptions()),
+    )
+    .await?;
+
+    Ok(())
+}
+
+async fn text_message_handler() -> HandlerResult {
+    Ok(())
+}
+
+async fn photo_message_handler() -> HandlerResult {
     Ok(())
 }
 
