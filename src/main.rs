@@ -1,8 +1,13 @@
 // TODO: Add user state enum
+
+mod obsidian;
+
+use obsidian::vault_struct::ObsidianVault;
+
 use dptree::case;
 use teloxide::{
     prelude::*,
-    types::{Message, Update},
+    types::{ChatPhoto, Message, Update},
     utils::command::BotCommands,
 };
 
@@ -21,7 +26,8 @@ async fn main() -> Result<(), Error> {
         .branch(case![Command::Help { help_command }].endpoint(help_command_handler))
         .branch(case![Command::List].endpoint(list_command_handler))
         .branch(case![Command::Settings].endpoint(settings_command_handler))
-        .branch(case![Command::New { data }].endpoint(new_command_handler));
+        .branch(case![Command::New { data }].endpoint(new_command_handler))
+        .branch(case![Command::GitHub].endpoint(github_command_handler));
 
     let message_handler = Update::filter_message()
         .branch(command_handler)
@@ -40,7 +46,7 @@ async fn main() -> Result<(), Error> {
     Ok(())
 }
 
-// The 'comments' below are actually display to the user
+// All available commands
 #[derive(BotCommands, Clone)]
 #[command(
     rename_rule = "lowercase",
@@ -63,6 +69,27 @@ enum Command {
     /// Add a new vault
     #[command()]
     New { data: String },
+
+    /// Link to this GitHub repo
+    #[command(aliases = ["git"])]
+    GitHub,
+}
+
+// User State
+#[derive(Clone, Default)]
+pub enum State {
+    #[default]
+    Start,
+
+    // After the user sends a photo, ask which obsidian vault they'd like to save it to
+    GetObsidianVault {
+        photo_id: ChatPhoto,
+    },
+
+    GenerateMetadata {
+        photo_id: ChatPhoto,
+        vault: ObsidianVault,
+    },
 }
 
 async fn help_command_handler(bot: Bot, msg: Message, help_command: String) -> HandlerResult {
@@ -120,10 +147,19 @@ async fn photo_message_handler(bot: Bot, msg: Message) -> HandlerResult {
     Ok(())
 }
 
+async fn github_command_handler(bot: Bot, msg: Message) -> HandlerResult {
+    bot.send_message(
+        msg.chat.id,
+        "GitHub repo link \n https://github.com/vyndlar/ocr-obsidian-rs",
+    )
+    .await?;
+    Ok(())
+}
+
 fn get_help_with_command(command: &str) -> String {
     match command {
         "list" | "ls" => {
-            "The ```list``` function listst all vaults that ocr-obsidian can see. If one you want is not here, try using the ```/add``` command.".to_string()
+            "The list function listst all vaults that ocr-obsidian can see. If one you want is not here, try using the /add command.".to_string()
         },
 
         _ => "Error".to_string(),
