@@ -82,13 +82,18 @@ pub enum State {
     Start,
 
     // After the user sends a photo, ask which obsidian vault they'd like to save it to
-    GetObsidianVault {
-        photo_id: ChatPhoto,
-    },
+    GetObsidianVault,
+    // might add ChatPhoto teloxide struct or path to photo
+    // but the path to the photo would be the same every time..
 
+    // multi-pass AI to go from image to markdown
+    GenerateMarkdown,
+
+    // use ollama to generate file metadata: filename, tags, etc
     GenerateMetadata {
-        photo_id: ChatPhoto,
+        // whatever photo option I go with in GetObsidianVault should reflect here
         vault: ObsidianVault,
+        file_data: String,
     },
 }
 

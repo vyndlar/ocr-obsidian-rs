@@ -1,0 +1,12 @@
+# EXAMPLE
+[ai]
+endpoint = "http://localhost:11434" # This is the default endpoint for ollama
+model = "qwen2.5vl:3b"              # This is the model I use
+temperature = 0.2                   # The lower the number the better for OCR
+
+[vaults]
+base_path = "~/Documents/Obsidian" # Folder where all your vaults live
+
+[[vaults.items]]
+name = "MyVault" # The program will look for ~/Documents/Obsidian/MyVault
+tags = []        # The program will scan for this automatically

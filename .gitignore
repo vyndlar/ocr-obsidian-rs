@@ -12,3 +12,5 @@ rustc-ice-*.txt
 .env
 
 debug-run.sh
+
+/user-settings/config.toml
